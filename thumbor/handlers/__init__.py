@@ -174,7 +174,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
             self.log_exception(*sys.exc_info())
 
-            if 'cannot identify image file' in e.message:
+            if 'cannot identify image file' in str(e):
                 logger.warning(msg)
                 self._error(400)
             else:
@@ -633,9 +633,8 @@ class BaseHandler(tornado.web.RequestHandler):
             storage.put_crypto(url)
         except Exception:
             fetch_result.successful = False
-        finally:
-            if not fetch_result.successful:
-                raise
+            raise
+        else:
             fetch_result.buffer = None
             fetch_result.engine = self.context.request.engine
             raise gen.Return(fetch_result)

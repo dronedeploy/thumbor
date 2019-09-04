@@ -108,10 +108,10 @@ class Transformer(object):
 
         mode, data = self.engine.image_data_as_rgb()
         box = _bounding_box.apply(
-            mode,
+            mode.encode(),
             self.engine.size[0],
             self.engine.size[1],
-            self.context.request.trim_pos,
+            self.context.request.trim_pos.encode(),
             self.context.request.trim_tolerance,
             data
         )

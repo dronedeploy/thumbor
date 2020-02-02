@@ -4,14 +4,14 @@
 # thumbor imaging service
 # https://github.com/thumbor/thumbor/wiki
 
+import functools
+from concurrent.futures import Future
 # Licensed under the MIT license:
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com thumbor@googlegroups.com
-
 from os.path import abspath, exists
-import tornado
-from concurrent.futures import ThreadPoolExecutor, Future
-import functools
+
+from tornado.ioloop import IOLoop
 
 from thumbor.filters import FiltersFactory
 from thumbor.metrics.logger_metrics import Metrics
@@ -290,7 +290,7 @@ class ThreadPool(object):
 
     def __init__(self, thread_pool_size):
         if thread_pool_size:
-            self.pool = ThreadPoolExecutor(thread_pool_size)
+            self.pool = True
         else:
             self.pool = None
 
@@ -309,11 +309,9 @@ class ThreadPool(object):
         callback(result)
 
     def _execute_in_pool(self, operation, callback):
-        task = self.pool.submit(operation)
-        task.add_done_callback(
-            lambda future: tornado.ioloop.IOLoop.instance().add_callback(
-                functools.partial(callback, future)
-            )
+        future = IOLoop.current().run_in_executor(None, operation)
+        future.add_done_callback(
+            lambda future: functools.partial(callback, future)
         )
 
     def queue(self, operation, callback):
@@ -323,6 +321,4 @@ class ThreadPool(object):
             self._execute_in_pool(operation, callback)
 
     def cleanup(self):
-        if self.pool:
-            print("Joining threads....")
-            self.pool.shutdown()
+        pass
